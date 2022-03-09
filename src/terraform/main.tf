@@ -26,16 +26,25 @@ resource "azurerm_virtual_network" "vnet" {
 }
 
 # Create a subnet for VM
-resource "azurerm_subnet" "vm-subnet" {
-  name                 = "vm-subnet"
+resource "azurerm_subnet" "subnet" {
+  name                 = var.subnet_name
   address_prefixes     = ["10.0.1.0/24"]
   virtual_network_name = azurerm_virtual_network.vnet.name
   resource_group_name  = azurerm_resource_group.rg.name
 }
 
+# Get a Public IP
+resource "azurerm_public_ip" "pub_ip" {
+  depends_on          = [azurerm_resource_group.rg]
+  name                = var.pubip_name
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg.name
+  allocation_method   = "Dynamic"
+}
+
 # Create an NSG
 resource "azurerm_network_security_group" "nsg" {
-  name                = "${var.prefix}-sg"
+  name                = "${var.prefix}-nsg"
   location            = var.location
   resource_group_name = azurerm_resource_group.rg.name
 
@@ -64,28 +73,18 @@ resource "azurerm_network_security_group" "nsg" {
   }
 }
 
-# Get a Static Public IP
-resource "azurerm_public_ip" "linux-vm-ip" {
-  depends_on          = [azurerm_resource_group.rg]
-  name                = var.hostname
-  location            = var.location
-  resource_group_name = azurerm_resource_group.rg.name
-  allocation_method   = "Static"
-}
-
-# Create Network Card for linux VM
+# Create Network Interface Card
 resource "azurerm_network_interface" "nic" {
   depends_on          = [azurerm_resource_group.rg]
-  name                = "nic"
+  name                = var.nic_name
   location            = var.location
   resource_group_name = azurerm_resource_group.rg.name
 
   ip_configuration {
-    name                          = "internal"
-    subnet_id                     = azurerm_subnet.vm-subnet.id
+    name                          = "nicConfig"
+    subnet_id                     = azurerm_subnet.subnet.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.linux-vm-ip.id
-  }
+    public_ip_address_id          = azurerm_public_ip.pub_ip.id
 }
 
 
@@ -100,6 +99,12 @@ data "azurerm_key_vault" "kv" {
 data "azurerm_key_vault_secret" "kv_secret" {
   name         = var.kv_secretname
   key_vault_id = data.azurerm_key_vault.kv.id
+}
+
+# Create (and display) an SSH key
+resource "tls_private_key" "example_ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
 }
 
 # Create Linux VM with linux server
@@ -120,7 +125,7 @@ resource "azurerm_linux_virtual_machine" "linux-vm" {
 
   admin_ssh_key {
     username   = var.admin_username
-    public_key = file("~/.ssh/id_rsa.pub")
+    public_key = tls_private_key.example_ssh.public_key_openssh
   }
 
   os_disk {

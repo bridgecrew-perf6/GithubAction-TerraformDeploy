@@ -28,6 +28,16 @@ variable "hostname" {
   default     = "tf-linuxvm-httpd"
 }
 
+variable "pubip_name" {
+  description = "Public IP name for the VM."
+  default     = "pip4webvm"
+}
+
+variable "nic_name" {
+  description = "NIC name for the VM."
+  default     = "nic4webvm"
+}
+
 variable "vm_size" {
   description = "Specifies the size of the virtual machine."
   default     = "Standard_DS1_v2"
