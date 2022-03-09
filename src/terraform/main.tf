@@ -118,10 +118,10 @@ resource "azurerm_linux_virtual_machine" "linux-vm" {
     version   = var.image_version
   }
 
-  admin_ssh_key {
-    username   = var.admin_username
-    public_key = file("~/.ssh/id_rsa.pub")
-  }
+#  admin_ssh_key {
+#    username   = var.admin_username
+#    public_key = file("~/.ssh/id_rsa.pub")
+#  }
 
   os_disk {
     name                 = "${var.hostname}_osdisk"
