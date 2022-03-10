@@ -8,7 +8,7 @@ output "vm_pip" {
     value = azurerm_linux_virtual_machine.linux-vm.public_ip_address
 }
 
-output "test_url" {
+output "web_page_test_url" {
     description = "Vertiy the result of the provision"
-    value = "start http://${azurerm_linux_virtual_machine.linux-vm.public_ip_address}"
+    value = "http://${azurerm_linux_virtual_machine.linux-vm.public_ip_address}"
 }
